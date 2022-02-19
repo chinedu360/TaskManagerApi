@@ -1,22 +1,52 @@
-const getAllTask = (req, res, next) => {
-    res.send('all Items')
-}
+const Task = require('../models/task')
+const asyncWrapper = require('../middleware/async')
+const {createCustomError} = require('../errors/custom-error')
 
-const createTask = (req, res, next) => {
-    res.json(req.body)
-}
+const getAllTask = asyncWrapper(async (req, res, next) => {
+        const tasks = await Task.find({})
+        res.status(200).json({tasks})
+        //res.status(200).json({ tasks, amount: tasks.length})
+        //res.status(200).json({ status: 'success', data: {tasks, nbHits: tasks.length} })
+        //res.status(500).json({msg: error})
+})
 
-const getTask = (req, res, next) => {
-    res.json({id: req.params.id})
-}
+const createTask = asyncWrapper(async (req, res, next) => {
+        const task = await Task.create(req.body)
+        res.status(201).json({task})   
+})
 
-const updateTask = (req, res, next) => {
-    res.send('Update Task')
-}
+const getTask = asyncWrapper( async (req, res, next) => {
+        const {id: taskId} = req.params
+        console.log(req.params)
+        const task = await Task.findOne({_id: taskId})
+        if (!task) {
+            return next(createCustomError(`No task with id : ${taskId}`), 404)
+        }
+        res.status(200).json({task})
+})
 
-const deleteTask = (req, res, next) => {
-    res.send('Delete Task')
-}
+const updateTask = asyncWrapper(async (req, res, next) => {
+        const {id: taskId} = req.params
+
+        const task = await Task.findByIdAndUpdate({_id: taskID}, req.body, {
+            new: true,
+            runValidators: true
+        })
+
+        if (!task) {
+            return next(createCustomError(`No task with id : ${taskId}`), 404)
+        }
+        res.status(200).json({task})
+})
+
+const deleteTask = asyncWrapper( async (req, res, next) => {
+        const {id: taskId} = req.params
+        const task = await Task.findOneAndDelete({_id: taskId})
+        if (!task) {
+            return next(createCustomError(`No task with id : ${taskId}`), 404)
+        }
+        res.status(200).json({task})
+})
 
 module.exports = {
     getAllTask, 
